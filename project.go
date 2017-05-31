@@ -81,6 +81,14 @@ type ProjectComponent struct {
 	ProjectID           int    `json:"projectId" structs:"projectId,omitempty"`
 }
 
+type StatusList []struct {
+	Self     string   `json:"self,omitempty" structs:"self,omitempty"`
+	ID       string   `json:"id,omitempty" structs:"id,omitempty"`
+	Name     string   `json:"name" structs:"name,omitempty"`
+	Subtask  bool     `json:"subtask" structs:"subtask,omitempty"`
+	Statuses []Status `json:"statuses" structs:"statuses,omitempty"`
+}
+
 // GetList gets all projects form JIRA
 //
 // JIRA API docs: https://docs.atlassian.com/jira/REST/latest/#api/2/project-getAllProjects
@@ -118,3 +126,24 @@ func (s *ProjectService) Get(projectID string) (*Project, *Response, error) {
 	}
 	return project, resp, nil
 }
+
+// Get returns a full representation of the project for the given issue key.
+// JIRA will attempt to identify the project by the projectIdOrKey path parameter.
+// This can be an project id, or an project key.
+//
+// JIRA API docs: https://docs.atlassian.com/jira/REST/latest/#api/2/project-getProject
+func (s *ProjectService) GetStatuses(projectID string) (*StatusList, *Response, error) {
+	apiEndpoint := fmt.Sprintf("rest/api/2/project/%s/statuses", projectID)
+	req, err := s.client.NewRequest("GET", apiEndpoint, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	statusList := new(StatusList)
+	resp, err := s.client.Do(req, statusList)
+	if err != nil {
+		return nil, resp, err
+	}
+	return statusList, resp, nil
+}
+
